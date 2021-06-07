@@ -1,0 +1,124 @@
+<html>
+
+<head>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<script>
+
+    var district = 295 // Calicut
+    const day = String(new Date().getDate()).padStart(2, '0');
+    const today = day + '-06-2021';
+    const dayAfter = String(new Date().getDate() + 1).padStart(2, '0') + '-06-2021';
+
+    function fetchAvailability(districtId, date, divId) {
+        axios.get(`https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByDistrict?district_id=${districtId}&date=${date}`).then(res => {
+            var data = res.data;
+            var availability = 0;
+            var ele = "<table border = '1'>"
+            data.centers.forEach(item => {
+                var sum = 0;
+                item.sessions.forEach(element => {
+                    sum += element.available_capacity_dose1;
+                });
+
+                availability += sum;
+
+                if (sum > 0) {
+                    ele += `<tr><td>${item.name}</td><td>${item.address}</td><td><span style="color:green;">Available Dose</span> - ${sum}</td></tr>`
+                }
+            });
+            if (availability == 0) {
+                document.getElementById(divId).innerHTML = '<h3>Not available</h3>'
+            } else {
+                document.getElementById(divId).innerHTML = ele + '</table>'
+            }
+            if (availability > 0) {
+                notify(date, availability)
+            }
+        })
+    }
+
+    function repeatFeth() {
+        fetchAvailability(district, today, "availability");
+        fetchAvailability(district, dayAfter, "availabilitytmrw");
+        setTimeout(repeatFeth, 600000)
+    }
+
+    function onSelectDistrict(e) {
+        let dist = document.getElementById('district').value;
+        district = dist;
+        fetchAvailability(dist, today, "availability");
+        fetchAvailability(dist, dayAfter, "availabilitytmrw");
+    }
+
+    function notify(output, availability) {
+        if (!window.Notification) {
+            console.log('Browser does not support notifications.');
+        } else {
+            // check if permission is already granted
+            if (Notification.permission === 'granted') {
+                // show notification here
+                var notify = new Notification('Hi there! ', {
+                    body: 'Vaccine available'
+                });
+            } else {
+                // request permission from user
+                Notification.requestPermission().then(function (p) {
+                    if (p === 'granted') {
+                        // show notification here
+                        var notify = new Notification('Hi there!', {
+                            body: 'Vaccine available'
+                        });
+                    } else {
+                        console.log('User blocked notifications.');
+                    }
+                }).catch(function (err) {
+                    console.error(err);
+                });
+            }
+        }
+    }
+
+    window.addEventListener('load', function () {
+        fetchAvailability(district, today, "availability");
+        fetchAvailability(district, dayAfter, "availabilitytmrw");
+        repeatFeth();
+    });
+
+</script>
+
+<body>
+    <br /> <br /> 
+    <h1>Vaccine Availability In Kerala</h1>
+    <br />
+    <span>District : </span>
+
+    <select id="district" onchange="onSelectDistrict()">
+        <option value="295">Kasargod</option>
+        <option value="297">Kannur</option>
+        <option value="299">Wayanad</option>
+        <option value="305">Calicut</option>
+
+        <option value="302">Malappuram</option>
+        <option value="303">Trissur</option>
+        <option value="308">Palakkad</option>
+
+        <option value="307">Ernakulam</option>
+
+        <option value="301">Alappuzha</option>
+        <option value="304">Kottayam</option>
+
+        <option value="300">Pathanamthitta</option>
+
+        <option value="306">Idukki</option>
+        <option value="298">Kollam</option>
+        <option value="296">Trivandrum</option>
+    </select>
+
+    <h3 style="padding-left:10%;font-size: large;" id="avail">Today</h3>
+    <div id="availability" style="padding-left:12%;"></div>
+    <h3 style="padding-left:10%;font-size: large;" id="availTmrw">Tomorrow</h3>
+    <div id="availabilitytmrw" style="padding-left:12%;"></div>
+</body>
+
+</html>
