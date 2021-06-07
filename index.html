@@ -9,8 +9,7 @@
     const day = String(new Date().getDate()).padStart(2, '0');
     const today = `${day}-${String(new Date().getMonth() + 1).padStart(2, '0')}-2021`;
     const dayAfter = `${String(new Date().getDate() + 1).padStart(2, '0')}-${String(new Date().getMonth() + 1).padStart(2, '0')}-2021`;
-
-    function fetchAvailability(districtId, date, divId) {
+    function fetchAvailability(districtId, date, divId, shouldNotify) {
         axios.get(`https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByDistrict?district_id=${districtId}&date=${date}`).then(res => {
             var data = res.data;
             var availability = 0;
@@ -32,23 +31,23 @@
             } else {
                 document.getElementById(divId).innerHTML = ele + '</table>'
             }
-            if (availability > 0) {
+            if (availability > 0 && shouldNotify) {
                 notify(date, availability)
             }
         })
     }
 
     function repeatFeth() {
-        fetchAvailability(district, today, "availability");
-        fetchAvailability(district, dayAfter, "availabilitytmrw");
-        setTimeout(repeatFeth, 600000)
+        fetchAvailability(district, today, "availability", true);
+        fetchAvailability(district, dayAfter, "availabilitytmrw", true);
+        setTimeout(repeatFeth, 300000)
     }
 
     function onSelectDistrict(e) {
         let dist = document.getElementById('district').value;
         district = dist;
-        fetchAvailability(dist, today, "availability");
-        fetchAvailability(dist, dayAfter, "availabilitytmrw");
+        fetchAvailability(dist, today, "availability", false);
+        fetchAvailability(dist, dayAfter, "availabilitytmrw", false);
     }
 
     function notify(output, availability) {
@@ -80,9 +79,9 @@
     }
 
     window.addEventListener('load', function () {
-        fetchAvailability(district, today, "availability");
-        fetchAvailability(district, dayAfter, "availabilitytmrw");
-        repeatFeth();
+        fetchAvailability(district, today, "availability", false);
+        fetchAvailability(district, dayAfter, "availabilitytmrw", false);
+        setTimeout(repeatFeth, 60000)
     });
 
 </script>
